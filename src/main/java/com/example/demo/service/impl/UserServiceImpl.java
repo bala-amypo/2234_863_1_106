@@ -4,19 +4,15 @@ import com.example.demo.entity.User;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -24,7 +20,7 @@ public class UserServiceImpl implements UserService {
         if (user.getRole() == null || user.getRole().isEmpty()) {
             user.setRole("USER");
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // NO password encoding for now
         return userRepository.save(user);
     }
 
