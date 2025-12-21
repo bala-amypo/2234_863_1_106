@@ -6,6 +6,17 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "compliance_thresholds")
 public class ComplianceThreshold {
+    @ManyToOne
+    @JoinColumn(name = "sensor_reading_id") // optional, specifies the DB column
+     private SensorReading sensorReading;
+
+public SensorReading getSensorReading() {
+    return sensorReading;
+}
+
+public void setSensorReading(SensorReading sensorReading) {
+    this.sensorReading = sensorReading;
+}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
