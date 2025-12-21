@@ -36,8 +36,14 @@ public class ComplianceEvaluationServiceImpl implements ComplianceEvaluationServ
         }
 
         String sensorType = reading.getSensor().getSensorType();
-        ComplianceThreshold threshold = thresholdRepository.findBySensorType(sensorType)
-                .orElseThrow(() -> new ResourceNotFoundException("Threshold not found for sensor type: " + sensorType));
+        List<ComplianceThreshold> thresholds =
+        thresholdRepository.findBySensorType(sensorType);
+
+if (thresholds.isEmpty()) {
+    throw new RuntimeException("No threshold found for sensor type: " + sensorType);
+}
+
+ComplianceThreshold threshold = thresholds.get(0);
 
         String status;
         if (reading.getReadingValue() >= threshold.getMinValue() && reading.getReadingValue() <= threshold.getMaxValue()) {

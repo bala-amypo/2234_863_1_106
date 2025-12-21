@@ -36,8 +36,15 @@ public class ComplianceThresholdServiceImpl implements ComplianceThresholdServic
 
     @Override
     public ComplianceThreshold getThresholdBySensorType(String sensorType) {
-        return thresholdRepository.findBySensorType(sensorType)
-                .orElseThrow(() -> new ResourceNotFoundException("Threshold not found"));
+        List<ComplianceThreshold> thresholds =
+        thresholdRepository.findBySensorType(sensorType);
+
+if (thresholds.isEmpty()) {
+    throw new RuntimeException("No threshold found for sensor type: " + sensorType);
+}
+
+return thresholds.get(0);
+
     }
 
     @Override
