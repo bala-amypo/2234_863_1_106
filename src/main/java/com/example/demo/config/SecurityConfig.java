@@ -8,6 +8,6 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // this is what Spring will use
+        return new BCryptPasswordEncoder(); 
     }
 }
