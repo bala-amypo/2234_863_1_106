@@ -83,4 +83,14 @@ public class Sensor {
     public void setIsActive(Boolean active) {
         isActive = active;
     }
+    private boolean active;
+
+public boolean getActive() {
+    return active;
+}
+
+public void setActive(boolean active) {
+    this.active = active;
+}
+
 }
