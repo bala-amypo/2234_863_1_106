@@ -7,56 +7,46 @@ import com.example.demo.entity.User;
 import com.example.demo.security.JwtTokenProvider;
 import com.example.demo.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Authentication", description = "Endpoints for user authentication and registration")
+@Tag(name = "Authentication", description = "Authentication endpoints")
 public class AuthController {
 
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
-    private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
-        this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Operation(summary = "Register user", description = "Register a new user")
     @PostMapping("/register")
-    @Operation(summary = "Register User", description = "Register a new user with email, password, and optional role")
-    public ResponseEntity<ApiResponse<User>> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@RequestBody User user) {
         User registeredUser = userService.register(user);
-        return ResponseEntity.ok(new ApiResponse<>(true, "User registered successfully", registeredUser));
+        return new ResponseEntity<>(new ApiResponse(true, "User registered successfully", registeredUser), HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Login user", description = "Authenticate user and return JWT token")
     @PostMapping("/login")
-    @Operation(summary = "Login User", description = "Authenticate user and return JWT token")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody AuthRequest authRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
-        );
+    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        User user = userService.findByEmail(request.getEmail());
+        
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+             return new ResponseEntity<>(new ApiResponse(false, "Invalid credentials", null), HttpStatus.UNAUTHORIZED);
+        }
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        User user = userService.findByEmail(authRequest.getEmail());
         String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
-
-        AuthResponse authResponse = new AuthResponse(token, user.getId(), user.getEmail(), user.getRole());
-        return ResponseEntity.ok(new ApiResponse<>(true, "Login successful", authResponse));
+        AuthResponse response = new AuthResponse(token, user.getId(), user.getEmail(), user.getRole());
+        
+        return ResponseEntity.ok(response);
     }
 }
