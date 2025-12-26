@@ -17,13 +17,17 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    public UserDetails loadUserByUsername(String email)
+            throws UsernameNotFoundException {
 
-        String role = user.getRole();
-        // Ensure role has ROLE_ prefix for Spring Security
-        if (role != null && !role.startsWith("ROLE_")) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found with email: " + email)
+                );
+
+        String role = user.getRole().getName(); 
+
+        if (!role.startsWith("ROLE_")) {
             role = "ROLE_" + role;
         }
 

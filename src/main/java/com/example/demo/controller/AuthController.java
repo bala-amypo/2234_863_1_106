@@ -22,31 +22,50 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder) {
+    public AuthController(UserService userService,
+                          JwtTokenProvider jwtTokenProvider,
+                          PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Operation(summary = "Register user", description = "Register a new user")
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User user) {
         User registeredUser = userService.register(user);
-        return new ResponseEntity<>(new ApiResponse(true, "User registered successfully", registeredUser), HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                new ApiResponse(true, "User registered successfully", registeredUser),
+                HttpStatus.CREATED
+        );
     }
 
-    @Operation(summary = "Login user", description = "Authenticate user and return JWT token")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+
         User user = userService.findByEmail(request.getEmail());
-        
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-             return new ResponseEntity<>(new ApiResponse(false, "Invalid credentials", null), HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>(
+                    new ApiResponse(false, "Invalid credentials", null),
+                    HttpStatus.UNAUTHORIZED
+            );
         }
 
-        String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail(), user.getRole());
-        AuthResponse response = new AuthResponse(token, user.getId(), user.getEmail(), user.getRole());
-        
+        String roleName = user.getRole().getName();  
+
+        String token = jwtTokenProvider.generateToken(
+                user.getId(),
+                user.getEmail(),
+                roleName
+        );
+
+        AuthResponse response = new AuthResponse(
+                token,
+                user.getId(),
+                user.getEmail(),
+                roleName
+        );
+
         return ResponseEntity.ok(response);
     }
 }
