@@ -11,11 +11,11 @@ public class Sensor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String sensorCode;
 
     @Column(nullable = false)
-    private String sensorType;
+    private String sensorType; // e.g., PH, TDS, Turbidity
 
     @ManyToOne
     @JoinColumn(name = "location_id")
@@ -35,9 +35,7 @@ public class Sensor {
         this.installedAt = installedAt;
         this.isActive = isActive;
     }
-    public Boolean getIsActive() {
-    return isActive;
-}
+
     public Long getId() {
         return id;
     }
@@ -78,11 +76,11 @@ public class Sensor {
         this.installedAt = installedAt;
     }
 
-    public Boolean getActive() {
+    public Boolean getIsActive() {
         return isActive;
     }
 
-    public void setActive(Boolean active) {
+    public void setIsActive(Boolean active) {
         isActive = active;
     }
 }

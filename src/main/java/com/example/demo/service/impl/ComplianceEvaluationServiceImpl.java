@@ -12,81 +12,72 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ComplianceEvaluationServiceImpl implements ComplianceEvaluationService {
 
-    private final SensorReadingRepository readingRepository;
+    private final SensorReadingRepository sensorReadingRepository;
     private final ComplianceThresholdRepository thresholdRepository;
-    private final ComplianceLogRepository logRepository;
+    private final ComplianceLogRepository complianceLogRepository;
 
-    public ComplianceEvaluationServiceImpl(SensorReadingRepository readingRepository, ComplianceThresholdRepository thresholdRepository, ComplianceLogRepository logRepository) {
-        this.readingRepository = readingRepository;
+    public ComplianceEvaluationServiceImpl(SensorReadingRepository sensorReadingRepository,
+                                           ComplianceThresholdRepository thresholdRepository,
+                                           ComplianceLogRepository complianceLogRepository) {
+        this.sensorReadingRepository = sensorReadingRepository;
         this.thresholdRepository = thresholdRepository;
-        this.logRepository = logRepository;
+        this.complianceLogRepository = complianceLogRepository;
     }
 
     @Override
     public ComplianceLog evaluateReading(Long readingId) {
-        SensorReading reading = readingRepository.findById(readingId)
+        SensorReading reading = sensorReadingRepository.findById(readingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reading not found"));
 
-        if (reading.getSensor() == null) {
-             throw new ResourceNotFoundException("Sensor not found for reading");
-        }
-
         String sensorType = reading.getSensor().getSensorType();
-        List<ComplianceThreshold> thresholds =
-        thresholdRepository.findBySensorType(sensorType);
+        ComplianceThreshold threshold = thresholdRepository.findBySensorType(sensorType)
+                .orElseThrow(() -> new ResourceNotFoundException("Threshold not found"));
 
-if (thresholds.isEmpty()) {
-    throw new RuntimeException("No threshold found for sensor type: " + sensorType);
-}
-
-ComplianceThreshold threshold = thresholds.get(0);
-
-        String status;
+        String statusAssigned = "UNSAFE";
         if (reading.getReadingValue() >= threshold.getMinValue() && reading.getReadingValue() <= threshold.getMaxValue()) {
-            status = "SAFE";
-        } else {
-            status = "UNSAFE";
-        }
-        
-        // Update reading status? Requirement says "status is determined automatically based on threshold evaluation" for Reading.
-        // It says "statusAssigned must match evaluated condition" for Log.
-        // It's good practice to update the reading status too if logic matches. 
-        reading.setStatus(status);
-        readingRepository.save(reading);
-
-        // Check if log exists
-        // Requirement: "Check if log already exists for reading; if yes, update it; if no, create new."
-        // We need a way to find log by reading.
-        List<ComplianceLog> existingLogs = logRepository.findBySensorReading_Id(readingId);
-        ComplianceLog log;
-        if (!existingLogs.isEmpty()) {
-            log = existingLogs.get(0); // Assume one per reading as per rules
-            log.setThresholdUsed(threshold);
-            log.setStatusAssigned(status);
-            log.setLoggedAt(LocalDateTime.now());
-        } else {
-            log = new ComplianceLog();
-            log.setSensorReading(reading);
-            log.setThresholdUsed(threshold);
-            log.setStatusAssigned(status);
-            log.setLoggedAt(LocalDateTime.now());
+            statusAssigned = "SAFE";
         }
 
-        return logRepository.save(log);
+        // Check if log already exists
+         List<ComplianceLog> existingLogs = complianceLogRepository.findBySensorReading_Id(readingId);
+         ComplianceLog log;
+         if (!existingLogs.isEmpty()) {
+             log = existingLogs.get(0);
+             log.setThresholdUsed(threshold);
+             log.setStatusAssigned(statusAssigned);
+             log.setLoggedAt(LocalDateTime.now());
+         } else {
+             log = new ComplianceLog();
+             log.setSensorReading(reading);
+             log.setThresholdUsed(threshold);
+             log.setStatusAssigned(statusAssigned);
+             log.setLoggedAt(LocalDateTime.now());
+             log.setRemarks("Evaluated automatically");
+         }
+
+        // Also update reading status? Spec says "status is determined automatically based on threshold evaluation" in 2.5
+        // But 6.6 says "evaluateReading ... returns log".
+        // I should probably update the reading status too as per 2.5 rule implication, though 6.6 doesn't explicitly say "update sensorReading".
+        // 2.5 says "status is determined automatically...". It implies updates.
+        // However, 6.6 "Implementation Rules" for evaluateReading doesn't explicitly mention saving SensorReading, only saving ComplianceLog.
+        // I will stick to saving ComplianceLog as explicitly described in 6.6.
+
+        return complianceLogRepository.save(log);
     }
 
     @Override
     public List<ComplianceLog> getLogsByReading(Long readingId) {
-        return logRepository.findBySensorReading_Id(readingId);
+        return complianceLogRepository.findBySensorReading_Id(readingId);
     }
 
     @Override
     public ComplianceLog getLog(Long id) {
-        return logRepository.findById(id)
+        return complianceLogRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Log not found"));
     }
 }
