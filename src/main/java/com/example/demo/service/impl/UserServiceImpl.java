@@ -1,7 +1,6 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.entity.User;
-import com.example.demo.entity.Role;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
@@ -14,24 +13,20 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @org.springframework.beans.factory.annotation.Autowired
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
-    public UserServiceImpl(UserRepository userRepository) {
-        this(userRepository, new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder());
-    }
-
     @Override
     public User register(User user) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
+        }
         if (user.getRole() == null) {
-            user.setRole(Role.USER);
+            user.setRole("USER");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        // enforce unique email
-        userRepository.findByEmail(user.getEmail()).ifPresent(u -> { throw new IllegalArgumentException("email already exists"); });
         return userRepository.save(user);
     }
 

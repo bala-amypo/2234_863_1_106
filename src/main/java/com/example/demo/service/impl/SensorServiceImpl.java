@@ -27,13 +27,10 @@ public class SensorServiceImpl implements SensorService {
                 .orElseThrow(() -> new ResourceNotFoundException("Location not found"));
 
         if (sensor.getSensorType() == null || sensor.getSensorType().isEmpty()) {
-            throw new IllegalArgumentException("sensorType required");
+            throw new IllegalArgumentException("sensorType");
         }
 
         sensor.setLocation(location);
-        if (sensor.getActive() == null) {
-            sensor.setActive(true);
-        }
         return sensorRepository.save(sensor);
     }
 

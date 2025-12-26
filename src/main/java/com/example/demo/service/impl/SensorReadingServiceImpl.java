@@ -14,11 +14,11 @@ import java.util.List;
 @Service
 public class SensorReadingServiceImpl implements SensorReadingService {
 
-    private final SensorReadingRepository readingRepository;
+    private final SensorReadingRepository sensorReadingRepository;
     private final SensorRepository sensorRepository;
 
-    public SensorReadingServiceImpl(SensorReadingRepository readingRepository, SensorRepository sensorRepository) {
-        this.readingRepository = readingRepository;
+    public SensorReadingServiceImpl(SensorReadingRepository sensorReadingRepository, SensorRepository sensorRepository) {
+        this.sensorReadingRepository = sensorReadingRepository;
         this.sensorRepository = sensorRepository;
     }
 
@@ -28,25 +28,26 @@ public class SensorReadingServiceImpl implements SensorReadingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Sensor not found"));
 
         if (reading.getReadingValue() == null || reading.getReadingValue() == 0) {
-            throw new IllegalArgumentException("readingvalue required");
+            throw new IllegalArgumentException("readingvalue");
         }
+
         if (reading.getReadingTime() != null && reading.getReadingTime().isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException("Reading time cannot be in the future");
         }
 
         reading.setSensor(sensor);
         reading.setStatus("PENDING");
-        return readingRepository.save(reading);
+        return sensorReadingRepository.save(reading);
     }
 
     @Override
     public SensorReading getReading(Long id) {
-        return readingRepository.findById(id)
+        return sensorReadingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reading not found"));
     }
 
     @Override
     public List<SensorReading> getReadingsBySensor(Long sensorId) {
-        return readingRepository.findBySensor_Id(sensorId);
+        return sensorReadingRepository.findBySensor_Id(sensorId);
     }
 }
