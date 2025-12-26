@@ -25,7 +25,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email already exists");
         }
         if (user.getRole() == null) {
-            user.setRole(Role.USER);
+            user.setRole(Role.ROLE_USER);
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
