@@ -14,10 +14,10 @@ import java.util.function.Function;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:9a4f2c8d3b7a1e6f4v5x8z3d2c1b9a7n6m5l4k3j2h1g0fE}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
+    @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
 
     private Key getSignInKey() {
