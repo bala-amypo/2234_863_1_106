@@ -35,7 +35,9 @@ public class Sensor {
         this.installedAt = installedAt;
         this.isActive = isActive;
     }
-
+    public Boolean getIsActive() {
+    return isActive;
+}
     public Long getId() {
         return id;
     }
