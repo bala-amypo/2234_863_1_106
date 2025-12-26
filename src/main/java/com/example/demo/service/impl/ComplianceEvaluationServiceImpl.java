@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ComplianceEvaluationServiceImpl implements ComplianceEvaluationService {
@@ -38,34 +37,30 @@ public class ComplianceEvaluationServiceImpl implements ComplianceEvaluationServ
         ComplianceThreshold threshold = thresholdRepository.findBySensorType(sensorType)
                 .orElseThrow(() -> new ResourceNotFoundException("Threshold not found"));
 
-        String statusAssigned = "UNSAFE";
+        String status = "UNSAFE";
         if (reading.getReadingValue() >= threshold.getMinValue() && reading.getReadingValue() <= threshold.getMaxValue()) {
-            statusAssigned = "SAFE";
+            status = "SAFE";
         }
 
-        // Check if log already exists
-         List<ComplianceLog> existingLogs = complianceLogRepository.findBySensorReading_Id(readingId);
-         ComplianceLog log;
-         if (!existingLogs.isEmpty()) {
-             log = existingLogs.get(0);
-             log.setThresholdUsed(threshold);
-             log.setStatusAssigned(statusAssigned);
-             log.setLoggedAt(LocalDateTime.now());
-         } else {
-             log = new ComplianceLog();
-             log.setSensorReading(reading);
-             log.setThresholdUsed(threshold);
-             log.setStatusAssigned(statusAssigned);
-             log.setLoggedAt(LocalDateTime.now());
-             log.setRemarks("Evaluated automatically");
-         }
+        List<ComplianceLog> existingLogs = complianceLogRepository.findBySensorReading_Id(readingId);
+        ComplianceLog log;
+        if (!existingLogs.isEmpty()) {
+            log = existingLogs.get(0);
+            log.setStatusAssigned(status);
+            log.setThresholdUsed(threshold);
+            log.setLoggedAt(LocalDateTime.now());
+            log.setRemarks("Re-evaluated");
+        } else {
+            log = new ComplianceLog();
+            log.setSensorReading(reading);
+            log.setThresholdUsed(threshold);
+            log.setStatusAssigned(status);
+            log.setLoggedAt(LocalDateTime.now());
+            log.setRemarks("Evaluated");
+        }
 
-        // Also update reading status? Spec says "status is determined automatically based on threshold evaluation" in 2.5
-        // But 6.6 says "evaluateReading ... returns log".
-        // I should probably update the reading status too as per 2.5 rule implication, though 6.6 doesn't explicitly say "update sensorReading".
-        // 2.5 says "status is determined automatically...". It implies updates.
-        // However, 6.6 "Implementation Rules" for evaluateReading doesn't explicitly mention saving SensorReading, only saving ComplianceLog.
-        // I will stick to saving ComplianceLog as explicitly described in 6.6.
+        reading.setStatus(status);
+        sensorReadingRepository.save(reading);
 
         return complianceLogRepository.save(log);
     }

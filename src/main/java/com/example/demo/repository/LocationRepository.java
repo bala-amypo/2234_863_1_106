@@ -6,6 +6,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LocationRepository extends JpaRepository<Location, Long> {
-    Optional<Location> findByLocationName(String locationName);
+    Optional<Location> findByLocationName(String name);
     List<Location> findByRegion(String region);
 }

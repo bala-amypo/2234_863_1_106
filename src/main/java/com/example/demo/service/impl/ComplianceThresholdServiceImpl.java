@@ -19,11 +19,9 @@ public class ComplianceThresholdServiceImpl implements ComplianceThresholdServic
 
     @Override
     public ComplianceThreshold createThreshold(ComplianceThreshold threshold) {
-        if (threshold.getMinValue() != null && threshold.getMaxValue() != null && threshold.getMinValue() >= threshold.getMaxValue()) {
-            throw new IllegalArgumentException("minvalue must be less than maxvalue");
-        }
-        if (threshold.getSeverityLevel() == null || threshold.getSeverityLevel().isEmpty()) {
-            throw new IllegalArgumentException("severityLevel required");
+        if (threshold.getMinValue() != null && threshold.getMaxValue() != null
+                && threshold.getMinValue() >= threshold.getMaxValue()) {
+            throw new IllegalArgumentException("minvalue");
         }
         return thresholdRepository.save(threshold);
     }
@@ -36,15 +34,8 @@ public class ComplianceThresholdServiceImpl implements ComplianceThresholdServic
 
     @Override
     public ComplianceThreshold getThresholdBySensorType(String sensorType) {
-        List<ComplianceThreshold> thresholds =
-        thresholdRepository.findBySensorType(sensorType);
-
-if (thresholds.isEmpty()) {
-    throw new RuntimeException("No threshold found for sensor type: " + sensorType);
-}
-
-return thresholds.get(0);
-
+        return thresholdRepository.findBySensorType(sensorType)
+                .orElseThrow(() -> new ResourceNotFoundException("Threshold not found"));
     }
 
     @Override
