@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.entity.Role;
-import com.example.demo.security.JwtTokenProvider;
+import com.example.demo.config.JwtTokenProvider;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
