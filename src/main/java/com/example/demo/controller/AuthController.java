@@ -16,10 +16,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public String login() {
-        // ✅ MUST PASS email + role
-        return jwtTokenProvider.generateToken(
-                "test@gmail.com",
-                Role.ROLE_USER.name()
-        );
+
+        String email = "test@gmail.com";
+        String role = Role.ROLE_USER.name();
+
+        return jwtTokenProvider.generateToken(email, role);
     }
 }
