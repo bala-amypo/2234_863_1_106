@@ -1,4 +1,4 @@
-package com.example.demo.security;
+package com.example.demo.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -10,26 +10,25 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private final String SECRET_KEY = "mysecretkey";
+    private final String SECRET_KEY = "demoSecretKey123";
     private final long EXPIRATION_TIME = 86400000; // 1 day
 
-    // ✅ Generate token with email + role
-    public String generateToken(String email, String role) {
+    // ✅ Generate JWT
+    public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
-                .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
     }
 
-    // ✅ Extract email (USED BY FILTER)
+    // ✅ Extract email from JWT
     public String extractEmail(String token) {
         return getClaims(token).getSubject();
     }
 
-    // ✅ Validate token
+    // ✅ Validate JWT
     public boolean validateToken(String token) {
         try {
             getClaims(token);
@@ -39,6 +38,7 @@ public class JwtTokenProvider {
         }
     }
 
+    // 🔒 Internal helper
     private Claims getClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(SECRET_KEY)
