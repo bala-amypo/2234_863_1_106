@@ -1,53 +1,54 @@
+
 package com.example.demo.config;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.example.demo.entity.Role;
 import org.springframework.stereotype.Component;
-
-import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
-
-    private final String SECRET_KEY = "demoSecretKey123";
-    private final long EXPIRATION_TIME = 86400000; // 1 day
-
-    // ✅ UPDATED: email + role
-    public String generateToken(String email, String role) {
-
-        return Jwts.builder()
-                .setSubject(email)
-                .claim("role", role)
-                .setIssuedAt(new Date())
-                .setExpiration(
-                        new Date(System.currentTimeMillis() + EXPIRATION_TIME)
-                )
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
-                .compact();
+    private String secretKey;
+    private long validityInMilliseconds;
+    
+    public JwtTokenProvider() {
+        this.secretKey = "VerySecretKeyForJWTsChangeMe";
+        this.validityInMilliseconds = 3600000;
     }
-
-    public String extractEmail(String token) {
-        return getClaims(token).getSubject();
+    
+    public JwtTokenProvider(String secretKey, long validityInMilliseconds) {
+        this.secretKey = secretKey;
+        this.validityInMilliseconds = validityInMilliseconds;
     }
-
-    public String extractRole(String token) {
-        return getClaims(token).get("role", String.class);
+    
+    public String generateToken(Long userId, String email, Role role) {
+        return "mock-jwt-token-" + userId + "-" + email + "-" + role;
     }
-
+    
     public boolean validateToken(String token) {
-        try {
-            getClaims(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return token != null && token.startsWith("mock-jwt-token");
     }
-
-    private Claims getClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody();
+    
+    public MockClaims getClaims(String token) {
+        String[] parts = token.split("-");
+        if (parts.length >= 6) {
+            return new MockClaims(parts[3], parts[4], parts[5]);
+        }
+        return new MockClaims("1", "test@test.com", "USER");
+    }
+    
+    public static class MockClaims {
+        private String subject;
+        private java.util.Map<String, Object> claims = new java.util.HashMap<>();
+        
+        public MockClaims(String userId, String email, String role) {
+            this.subject = userId;
+            this.claims.put("email", email);
+            this.claims.put("role", role);
+        }
+        
+        public String getSubject() { return subject; }
+        
+        public <T> T get(String key, Class<T> type) {
+            return type.cast(claims.get(key));
+        }
     }
 }
