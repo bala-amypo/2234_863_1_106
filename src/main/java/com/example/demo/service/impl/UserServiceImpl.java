@@ -27,7 +27,9 @@ public class UserServiceImpl implements UserService {
         }
 
         if (user.getRole() == null) {
-            user.setRole(Role.ROLE_USER); // ✅ FIXED
+    user.setRole(Role.ROLE_USER);
+}
+
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
